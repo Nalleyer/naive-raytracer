@@ -56,13 +56,25 @@ pub struct Scene {
 }
 
 impl Intersectable for Sphere {
-    fn intersect(&self, ray: &Ray) -> bool {
-        // 定义l是发射点到球心的向量
-        let l: Vector3 = self.center - ray.origin;
-        // 为了算球心到射线的距离，先算另一个直角边。它的长度是l在ray上的投影
-        // |adj2| = ray cosθ = l . ray / |ray| = l . ray
-        let adj2 = l.dot(&ray.direction);
-        let d2 = l.dot(&l) - (adj2 * adj2);
-        d2 < (self.radius * self.radius)
+    fn intersect(&self, ray: &Ray) -> Option<f64> {
+        // S: 球心 O: ray起点 I: 交点（如果有） Q: 从S引垂线交ray于Q
+        let os: Vector3 = self.center - ray.origin;
+        // 为了算球心到射线的距离d，先算另一个直角边。它的长度是os在ray上的投影
+        // os_on_ray = ray cosθ = os . ray / |ray| = os . ray
+        let os_on_ray = os.dot(&ray.direction);
+        let d2 = os.dot(&os) - (os_on_ray * os_on_ray);
+        let r2 = self.radius * self.radius;
+        if d2 > r2 {
+            None
+        } else {
+            let iq_len = (r2 - d2).sqrt();
+            let t0 = iq_len + os_on_ray;
+            let t1 = -iq_len + os_on_ray;
+            if t0 < 0f64 || t1 < 0f64 {
+                None
+            } else {
+                Some(t0.min(t1))
+            }
+        }
     }
 }

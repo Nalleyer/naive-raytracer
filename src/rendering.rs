@@ -1,6 +1,8 @@
 use crate::math::{Point, Vector3};
 use crate::scene::{Scene, Color};
 
+use std::f64;
+
 use image::{DynamicImage, Rgba, RgbaImage, ImageBuffer};
 
 pub struct Ray {
@@ -33,19 +35,19 @@ impl Ray {
 }
 
 pub trait Intersectable {
-    fn intersect(&self, ray: &Ray) -> bool;
+    fn intersect(&self, ray: &Ray) -> Option<f64>;
 }
 
 pub fn cast_ray(scene: &Scene, ray: &Ray) -> Color
 {
-    scene.items.iter().fold(Color::default(), |acc, x| {
-        if x.intersect(&ray) {
-            acc + x.color
-        }
-        else {
+    let (min_dis, color) = scene.items.iter().fold((f64::MAX, Color::default()), |acc, x| {
+        if let Some(dis) = x.intersect(&ray) {
+            if dis < acc.0 { (dis, x.color) } else {acc}
+        } else {
             acc
         }
-    })
+    });
+    color
 }
 
 pub fn render(scene: &Scene) -> DynamicImage {
