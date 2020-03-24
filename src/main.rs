@@ -1,15 +1,13 @@
 extern crate image;
 
-use image::{DynamicImage};
+use image::{DynamicImage, Rgba, RgbaImage, ImageBuffer};
+mod math;
+mod rendering;
 mod scene;
-mod point;
 
-use scene::{Scene, Item, Sphere, Color};
-use point::{Point};
-
-pub fn render(scene: &Scene) -> DynamicImage {
-    DynamicImage::new_rgb8(scene.width, scene.height)
-}
+use math::Point;
+use rendering::{Ray, cast_ray, render};
+use scene::{Color, Scene, Sphere};
 
 fn main() {
     println!("Hello, world!");
@@ -21,7 +19,7 @@ fn test_can_render_scene() {
         width: 800,
         height: 600,
         fov: 90.0,
-        item: Item::Sphere(Sphere {
+        items: vec![Box::new(Sphere {
             center: Point {
                 x: 0.0,
                 y: 0.0,
@@ -33,10 +31,12 @@ fn test_can_render_scene() {
                 g: 1.0,
                 b: 0.4,
             },
-        }),
+        })],
     };
 
     let img = render(&scene).to_rgb();
     assert_eq!(scene.width, img.width());
     assert_eq!(scene.height, img.height());
+
+    img.save("./test.png").unwrap();
 }
