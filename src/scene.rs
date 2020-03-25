@@ -41,7 +41,7 @@ impl AddAssign for Color {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Sphere {
     pub center: Point,
     pub radius: f64,
@@ -52,7 +52,7 @@ pub struct Scene {
     pub width: u32,
     pub height: u32,
     pub fov: f64,
-    pub items: Vec<Box<Sphere>>,
+    pub items: Vec<Box<Intersectable>>,
 }
 
 impl Intersectable for Sphere {
@@ -76,5 +76,9 @@ impl Intersectable for Sphere {
                 Some(t0.min(t1))
             }
         }
+    }
+
+    fn get_color(&self) -> Color {
+        self.color
     }
 }

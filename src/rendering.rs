@@ -36,26 +36,37 @@ impl Ray {
 
 pub trait Intersectable {
     fn intersect(&self, ray: &Ray) -> Option<f64>;
+    fn get_color(&self) -> Color;
 }
 
-pub fn cast_ray(scene: &Scene, ray: &Ray) -> Color
+pub struct Intersection<'a> {
+    pub distance: f64,
+    pub item: &'a Box<dyn Intersectable>,
+}
+
+impl<'a> Intersection<'a> {
+    pub fn new<'b> (distance: f64, item: &'b Box<dyn Intersectable>) -> Intersection<'b> {
+        Intersection { distance, item }
+    }
+}
+
+pub fn cast_ray<'a>(scene: &'a Scene, ray: &Ray) -> Option<Intersection<'a>>
 {
-    let (min_dis, color) = scene.items.iter().fold((f64::MAX, Color::default()), |acc, x| {
-        if let Some(dis) = x.intersect(&ray) {
-            if dis < acc.0 { (dis, x.color) } else {acc}
-        } else {
-            acc
-        }
-    });
-    color
+    scene.items.iter()
+        .filter_map(|i| i.intersect(ray).map(|d| Intersection::new(d, i)))
+        .min_by(|i1, i2| i1.distance.partial_cmp(&i2.distance).unwrap())
 }
 
 pub fn render(scene: &Scene) -> DynamicImage {
     let black = Rgba::from([0, 0, 0, 0]);
     let mut image = ImageBuffer::from_fn(scene.width, scene.height, |x, y| {
         let ray = Ray::new_prime(x, y, scene);
-        let mut color = cast_ray(scene, &ray);
-        Rgba::from(color.to_rgba8())
+        if let Some(intersection) = cast_ray(scene, &ray) {
+            Rgba::from(intersection.item.get_color().to_rgba8())
+        }
+        else {
+            Rgba::from([0,0,0,0])
+        }
     });
     DynamicImage::ImageRgba8(image)
 }
