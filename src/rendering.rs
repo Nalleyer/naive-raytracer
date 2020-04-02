@@ -1,9 +1,9 @@
 use crate::math::{Point, Vector3};
-use crate::scene::{Scene, Color};
+use crate::scene::{Color, Scene};
 
 use std::f64;
 
-use image::{DynamicImage, Rgba, RgbaImage, ImageBuffer};
+use image::{DynamicImage, ImageBuffer, Rgba};
 
 pub struct Ray {
     pub origin: Point,
@@ -19,8 +19,9 @@ impl Ray {
         assert!(scene.width > scene.height);
         let aspect_ratio = (scene.width as f64) / (scene.height as f64);
         let fov_adjustment = (scene.fov.to_radians() / 2.0).tan();
-        let sensor_x = (((x as f64 + 0.5) / scene.width as f64) * 2.0 - 1.0) * aspect_ratio * fov_adjustment;
-        let sensor_y = - (((y as f64 + 0.5) / scene.height as f64) * 2.0 - 1.0) * fov_adjustment;
+        let sensor_x =
+            (((x as f64 + 0.5) / scene.width as f64) * 2.0 - 1.0) * aspect_ratio * fov_adjustment;
+        let sensor_y = -(((y as f64 + 0.5) / scene.height as f64) * 2.0 - 1.0) * fov_adjustment;
 
         Self {
             origin: Point::zero(),
@@ -29,7 +30,7 @@ impl Ray {
                 y: sensor_y,
                 z: -1.0,
             }
-            .normalize()
+            .normalize(),
         }
     }
 }
@@ -37,6 +38,8 @@ impl Ray {
 pub trait Intersectable {
     fn intersect(&self, ray: &Ray) -> Option<f64>;
     fn get_color(&self) -> Color;
+    fn surface_normal(&self, hit_point: &Point) -> Vector3;
+    fn albedo(&self) -> f32;
 }
 
 pub struct Intersection<'a> {
@@ -45,29 +48,40 @@ pub struct Intersection<'a> {
 }
 
 impl<'a> Intersection<'a> {
-    pub fn new<'b> (distance: f64, item: &'b Box<dyn Intersectable>) -> Intersection<'b> {
+    pub fn new<'b>(distance: f64, item: &'b Box<dyn Intersectable>) -> Intersection<'b> {
         Intersection { distance, item }
     }
 }
 
-pub fn cast_ray<'a>(scene: &'a Scene, ray: &Ray) -> Option<Intersection<'a>>
-{
-    scene.items.iter()
+pub fn cast_ray<'a>(scene: &'a Scene, ray: &Ray) -> Option<Intersection<'a>> {
+    scene
+        .items
+        .iter()
         .filter_map(|i| i.intersect(ray).map(|d| Intersection::new(d, i)))
         .min_by(|i1, i2| i1.distance.partial_cmp(&i2.distance).unwrap())
 }
 
 pub fn render(scene: &Scene) -> DynamicImage {
-    let black = Rgba::from([0, 0, 0, 0]);
-    let mut image = ImageBuffer::from_fn(scene.width, scene.height, |x, y| {
+    let image = ImageBuffer::from_fn(scene.width, scene.height, |x, y| {
         let ray = Ray::new_prime(x, y, scene);
         if let Some(intersection) = cast_ray(scene, &ray) {
-            Rgba::from(intersection.item.get_color().to_rgba8())
-        }
-        else {
-            Rgba::from([0,0,0,0])
+            let hit_point = ray.origin + (ray.direction * intersection.distance);
+            let surface_normal = intersection.item.surface_normal(&hit_point);
+            let color: Color = scene
+                .lights
+                .iter()
+                .map(|light| {
+                    let dir = light.direction_from(&hit_point);
+                    light.color() * light.intensity(&hit_point) * (surface_normal.dot(&dir) as f32).max(0.0)
+                })
+                .sum::<Color>()
+                * intersection.item.albedo()
+                / std::f32::consts::PI;
+
+            Rgba::from((intersection.item.get_color() * color).clamp().to_rgba8())
+        } else {
+            Rgba::from([0, 0, 0, 0])
         }
     });
     DynamicImage::ImageRgba8(image)
 }
-

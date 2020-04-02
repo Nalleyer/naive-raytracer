@@ -26,6 +26,18 @@ impl Sub<Point> for Vector3 {
     }
 }
 
+impl Add<Vector3> for Point {
+    type Output = Point;
+
+    fn add(self, other: Vector3) -> Point {
+        Point {
+            x: self.x + other.x,
+            y: self.y + other.y,
+            z: self.z + other.z,
+        }
+    }
+}
+
 impl Sub<Point> for Point {
     type Output = Vector3;
 
@@ -66,6 +78,43 @@ impl Sub for Vector3 {
             z: self.z - other.z,
         }
     }
+}
+
+impl Neg for Vector3 {
+    type Output = Vector3;
+
+    fn neg(self) -> Vector3 {
+        Vector3 {
+            x: -self.x,
+            y: -self.y,
+            z: -self.z,
+        }
+    }
+}
+
+impl Mul for Vector3 {
+    type Output = Vector3;
+
+    fn mul(self, other: Vector3) -> Vector3 {
+        Vector3 {
+            x: self.x * other.x,
+            y: self.y * other.y,
+            z: self.z * other.z,
+        }
+    }
+}
+
+impl Mul<f64> for Vector3 {
+    type Output = Vector3;
+
+    fn mul(self, other: f64) -> Vector3 {
+        Vector3 {
+            x: self.x * other,
+            y: self.y * other,
+            z: self.z * other,
+        }
+    }
+
 }
 
 impl Vector3 {

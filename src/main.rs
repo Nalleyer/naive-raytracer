@@ -5,8 +5,8 @@ mod rendering;
 mod scene;
 
 use math::{Point, Vector3};
-use rendering::{cast_ray, render, Ray};
-use scene::{Color, Plane, Scene, Sphere};
+use rendering::{render};
+use scene::{Color, Plane, Scene, Sphere, DirectionalLight};
 
 fn main() {
     println!("Hello, world!");
@@ -31,6 +31,7 @@ fn test_can_render_scene() {
                     g: 1.0,
                     b: 0.4,
                 },
+                albedo: 0.5,
             }),
             Box::new(Sphere {
                 center: Point {
@@ -44,6 +45,7 @@ fn test_can_render_scene() {
                     g: 0.7,
                     b: 1.0,
                 },
+                albedo: 0.9,
             }),
             Box::new(Plane {
                 pos: Point {
@@ -53,12 +55,20 @@ fn test_can_render_scene() {
                 },
                 normal: Vector3::new(0.0, -1.0, 0.0).normalize(),
                 color: Color {
-                    r: 1.0,
-                    g: 0.2,
-                    b: 0.2,
+                    r: 0.2,
+                    g: 1.0,
+                    b: 1.0,
                 },
+                albedo: 0.3,
             }),
         ],
+        lights: vec![
+            Box::new(DirectionalLight {
+                direction: Vector3::new(0.0, -1.0, -3.0).normalize(),
+                color: Color {r: 1.0, g: 1.0, b: 1.0},
+                intensity: 5.0,
+            })
+        ]
     };
 
     let img = render(&scene).to_rgb();
