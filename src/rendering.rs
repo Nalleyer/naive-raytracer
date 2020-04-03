@@ -1,5 +1,5 @@
 use crate::math::{Point, Vector3};
-use crate::scene::{Color, Scene};
+use crate::scene::{Color, Scene, SHADOW_BIAS};
 
 use std::f64;
 
@@ -73,7 +73,17 @@ pub fn render(scene: &Scene) -> DynamicImage {
                 .map(|light| {
                     let dir = light.direction_from(&hit_point);
                     let theta = surface_normal.dot(&dir) as f32;
-                    light.color() * light.intensity(&hit_point) * theta
+                    let shadow_ray = Ray {
+                        origin: hit_point + surface_normal * SHADOW_BIAS,
+                        direction: dir,
+                    };
+                    let is_in_light = cast_ray(scene, &shadow_ray).is_none();
+                    light.color()
+                        * if is_in_light {
+                            light.intensity(&hit_point) * theta
+                        } else {
+                            0.0
+                        }
                 })
                 .sum::<Color>()
                 * intersection.item.albedo()

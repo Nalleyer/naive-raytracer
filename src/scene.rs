@@ -4,6 +4,8 @@ use crate::rendering::{Ray, Intersectable};
 
 pub type Distance = f64;
 
+pub const SHADOW_BIAS: f64 = 1e-13;
+
 #[derive(Debug, PartialEq, Default, Clone, Copy)]
 pub struct Color {
     pub r: f32,

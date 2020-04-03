@@ -63,9 +63,14 @@ fn test_can_render_scene() {
         ],
         lights: vec![
             Box::new(DirectionalLight {
-                direction: Vector3::new(0.0, -1.0, -3.0).normalize(),
-                color: Color {r: 1.0, g: 1.0, b: 0.6},
+                direction: Vector3::new(0.0, -1.0, -0.0).normalize(),
+                color: Color {r: 1.0, g: 1.0, b: 1.0},
                 intensity: 5.0,
+            }),
+            Box::new(DirectionalLight {
+                direction: Vector3::new(1.0, -1.0, 1.0).normalize(),
+                color: Color {r: 1.0, g: 1.0, b: 0.3},
+                intensity: 7.0,
             })
         ]
     };
