@@ -9,10 +9,9 @@ use rendering::{render};
 use scene::{Color, Plane, Scene, Sphere, DirectionalLight};
 
 fn main() {
-    println!("Hello, world!");
+    test_can_render_scene();
 }
 
-#[test]
 fn test_can_render_scene() {
     let scene = Scene {
         width: 800,
@@ -65,7 +64,7 @@ fn test_can_render_scene() {
         lights: vec![
             Box::new(DirectionalLight {
                 direction: Vector3::new(0.0, -1.0, -3.0).normalize(),
-                color: Color {r: 1.0, g: 1.0, b: 1.0},
+                color: Color {r: 1.0, g: 1.0, b: 0.6},
                 intensity: 5.0,
             })
         ]

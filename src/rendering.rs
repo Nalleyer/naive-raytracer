@@ -72,7 +72,8 @@ pub fn render(scene: &Scene) -> DynamicImage {
                 .iter()
                 .map(|light| {
                     let dir = light.direction_from(&hit_point);
-                    light.color() * light.intensity(&hit_point) * (surface_normal.dot(&dir) as f32).max(0.0)
+                    let theta = surface_normal.dot(&dir) as f32;
+                    light.color() * light.intensity(&hit_point) * theta
                 })
                 .sum::<Color>()
                 * intersection.item.albedo()
