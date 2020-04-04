@@ -1,4 +1,4 @@
-use std::ops::{Add, Sub, Mul, Neg};
+use std::ops::{Add, Mul, Neg, Sub};
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Point {
@@ -18,23 +18,12 @@ impl Sub<Vector3> for Point {
         }
     }
 }
+
 impl Sub<Point> for Vector3 {
     type Output = Point;
 
     fn sub(self, other: Point) -> Point {
         other - self
-    }
-}
-
-impl Add<Vector3> for Point {
-    type Output = Point;
-
-    fn add(self, other: Vector3) -> Point {
-        Point {
-            x: self.x + other.x,
-            y: self.y + other.y,
-            z: self.z + other.z,
-        }
     }
 }
 
@@ -46,6 +35,18 @@ impl Sub<Point> for Point {
             x: self.x - other.x,
             y: self.y - other.y,
             z: self.z - other.z,
+        }
+    }
+}
+
+impl Add<Vector3> for Point {
+    type Output = Point;
+
+    fn add(self, other: Vector3) -> Point {
+        Point {
+            x: self.x + other.x,
+            y: self.y + other.y,
+            z: self.z + other.z,
         }
     }
 }
@@ -66,7 +67,6 @@ pub struct Vector3 {
     pub y: f64,
     pub z: f64,
 }
-
 
 impl Sub for Vector3 {
     type Output = Vector3;
@@ -114,7 +114,6 @@ impl Mul<f64> for Vector3 {
             z: self.z * other,
         }
     }
-
 }
 
 impl Vector3 {
@@ -142,7 +141,6 @@ impl Vector3 {
             z: self.z * inv_len,
         }
     }
-
 
     pub fn dot(&self, other: &Vector3) -> f64 {
         self.x * other.x + self.y * other.y + self.z * other.z

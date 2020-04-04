@@ -6,7 +6,7 @@ mod scene;
 
 use math::{Point, Vector3};
 use rendering::{render};
-use scene::{Color, Plane, Scene, Sphere, DirectionalLight};
+use scene::{Color, Plane, Scene, Sphere, DirectionalLight, SphericalLight};
 
 fn main() {
     test_can_render_scene();
@@ -21,14 +21,14 @@ fn test_can_render_scene() {
             Box::new(Sphere {
                 center: Point {
                     x: 0.0,
-                    y: 0.0,
-                    z: -5.0,
+                    y: 2.0,
+                    z: -3.0,
                 },
                 radius: 1.0,
                 color: Color {
-                    r: 0.4,
+                    r: 0.0,
                     g: 1.0,
-                    b: 0.4,
+                    b: 0.0,
                 },
                 albedo: 0.5,
             }),
@@ -40,11 +40,25 @@ fn test_can_render_scene() {
                 },
                 radius: 3.5,
                 color: Color {
-                    r: 0.7,
-                    g: 0.7,
+                    r: 1.0,
+                    g: 0.0,
+                    b: 0.0,
+                },
+                albedo: 0.99,
+            }),
+            Box::new(Sphere {
+                center: Point {
+                    x: -7.5,
+                    y: 2.0,
+                    z: -7.5,
+                },
+                radius: 5.0,
+                color: Color {
+                    r: 0.0,
+                    g: 0.0,
                     b: 1.0,
                 },
-                albedo: 0.9,
+                albedo: 2.0,
             }),
             Box::new(Plane {
                 pos: Point {
@@ -54,23 +68,23 @@ fn test_can_render_scene() {
                 },
                 normal: Vector3::new(0.0, -1.0, 0.0).normalize(),
                 color: Color {
-                    r: 0.2,
-                    g: 1.0,
-                    b: 1.0,
+                    r: 0.5,
+                    g: 0.5,
+                    b: 0.5,
                 },
-                albedo: 0.3,
+                albedo: 0.5,
             }),
         ],
         lights: vec![
             Box::new(DirectionalLight {
-                direction: Vector3::new(0.0, -1.0, -0.0).normalize(),
+                direction: Vector3::new(-0.5, -1.0, 0.1).normalize(),
                 color: Color {r: 1.0, g: 1.0, b: 1.0},
-                intensity: 5.0,
+                intensity: 2.0,
             }),
-            Box::new(DirectionalLight {
-                direction: Vector3::new(1.0, -1.0, 1.0).normalize(),
-                color: Color {r: 1.0, g: 1.0, b: 0.3},
-                intensity: 7.0,
+            Box::new(SphericalLight {
+                position: Point::new(3.0, 2.0, -3.0),
+                color: Color {r: 1.0, g: 1.0, b: 1.0},
+                intensity: 255.0,
             })
         ]
     };

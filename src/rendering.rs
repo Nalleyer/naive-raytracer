@@ -77,7 +77,8 @@ pub fn render(scene: &Scene) -> DynamicImage {
                         origin: hit_point + surface_normal * SHADOW_BIAS,
                         direction: dir,
                     };
-                    let is_in_light = cast_ray(scene, &shadow_ray).is_none();
+                    let shadow_intersection = cast_ray(scene, &shadow_ray);
+                    let is_in_light = shadow_intersection.is_none() || shadow_intersection.unwrap().distance > light.distance(&hit_point);
                     light.color()
                         * if is_in_light {
                             light.intensity(&hit_point) * theta
