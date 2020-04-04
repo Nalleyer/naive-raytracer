@@ -1,5 +1,5 @@
 use crate::math::{Point, Vector3};
-use crate::scene::{Color, Scene, SHADOW_BIAS};
+use crate::scene::{Color, Scene, SHADOW_BIAS, TextureCoords, Distance, Material};
 
 use std::f64;
 
@@ -36,10 +36,10 @@ impl Ray {
 }
 
 pub trait Intersectable {
-    fn intersect(&self, ray: &Ray) -> Option<f64>;
-    fn get_color(&self) -> Color;
+    fn intersect(&self, ray: &Ray) -> Option<Distance>;
     fn surface_normal(&self, hit_point: &Point) -> Vector3;
-    fn albedo(&self) -> f32;
+    fn texture_coords(&self, hit_point: &Point) -> TextureCoords;
+    fn get_material(&self) -> &Material;
 }
 
 pub struct Intersection<'a> {
@@ -67,6 +67,7 @@ pub fn render(scene: &Scene) -> DynamicImage {
         if let Some(intersection) = cast_ray(scene, &ray) {
             let hit_point = ray.origin + (ray.direction * intersection.distance);
             let surface_normal = intersection.item.surface_normal(&hit_point);
+            let uv = intersection.item.texture_coords(&hit_point);
             let color: Color = scene
                 .lights
                 .iter()
@@ -87,10 +88,10 @@ pub fn render(scene: &Scene) -> DynamicImage {
                         }
                 })
                 .sum::<Color>()
-                * intersection.item.albedo()
+                * intersection.item.get_material().albedo
                 / std::f32::consts::PI;
 
-            Rgba::from((intersection.item.get_color() * color).clamp().to_rgba8())
+            Rgba::from((intersection.item.get_material().color.color(&uv) * color).clamp().to_rgba8())
         } else {
             Rgba::from([0, 0, 0, 0])
         }

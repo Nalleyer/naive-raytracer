@@ -1,10 +1,12 @@
-use std::ops::{Add, AddAssign, Mul, Div};
 use crate::math::{Point, Vector3};
-use crate::rendering::{Ray, Intersectable};
+use crate::rendering::{Intersectable, Ray};
+use std::ops::{Add, AddAssign, Div, Mul};
 
 pub type Distance = f64;
 
 pub const SHADOW_BIAS: f64 = 1e-13;
+
+use image::ImageBuffer;
 
 #[derive(Debug, PartialEq, Default, Clone, Copy)]
 pub struct Color {
@@ -19,8 +21,16 @@ impl Color {
             (self.r * 255f32) as u8,
             (self.g * 255f32) as u8,
             (self.b * 255f32) as u8,
-            255u8
+            255u8,
         ]
+    }
+
+    pub fn from_rgba8(rgba8: &[u8; 4]) -> Self {
+        Color {
+            r: rgba8[0] as f32 / 255f32,
+            g: rgba8[1] as f32 / 255f32,
+            b: rgba8[2] as f32 / 255f32,
+        }
     }
 
     pub fn clamp(&self) -> Color {
@@ -30,16 +40,15 @@ impl Color {
             g: self.g.min(1.0).max(0.0),
         }
     }
-
 }
 
 impl Add for Color {
-    type Output = Self ;
+    type Output = Self;
     fn add(self, other: Self) -> Self {
         Self {
-            r: self.r+ other.r,
-            g: self.g+ other.g,
-            b: self.b+ other.b,
+            r: self.r + other.r,
+            g: self.g + other.g,
+            b: self.b + other.b,
         }
     }
 }
@@ -93,20 +102,18 @@ impl Mul<Color> for Color {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Sphere {
     pub center: Point,
     pub radius: Distance,
-    pub color: Color,
-    pub albedo: f32,
+    pub material: Material,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Plane {
     pub pos: Point,
     pub normal: Vector3,
-    pub color: Color,
-    pub albedo: f32,
+    pub material: Material,
 }
 
 pub struct Scene {
@@ -140,16 +147,22 @@ impl Intersectable for Sphere {
         }
     }
 
-    fn get_color(&self) -> Color {
-        self.color
-    }
-
     fn surface_normal(&self, hit_point: &Point) -> Vector3 {
         (*hit_point - self.center).normalize()
     }
 
-    fn albedo(&self) -> f32 {
-        self.albedo
+    fn texture_coords(&self, hit_point: &Point) -> TextureCoords {
+        let p = *hit_point - self.center;
+        let phi = (p.z).atan2(p.x);
+        let theta = (p.y / self.radius).acos();
+        TextureCoords {
+            u: (1.0 + phi) as f32 / std::f32::consts::PI * 0.5,
+            v: theta as f32 / std::f32::consts::PI,
+        }
+    }
+
+    fn get_material(&self) -> &Material {
+        &self.material
     }
 }
 
@@ -167,16 +180,35 @@ impl Intersectable for Plane {
         None
     }
 
-    fn get_color(&self) -> Color {
-        self.color
-    }
-
     fn surface_normal(&self, _hit_point: &Point) -> Vector3 {
         -self.normal
     }
 
-    fn albedo(&self) -> f32 {
-        self.albedo
+    fn texture_coords(&self, hit_point: &Point) -> TextureCoords {
+        let mut x_axis = self.normal.cross(&Vector3 {
+            x: 0.0,
+            y: 0.0,
+            z: 1.0,
+        });
+        if x_axis.length() == 0.0 {
+            x_axis = self.normal.cross(&Vector3 {
+                x: 0.0,
+                y: 1.0,
+                z: 0.0,
+            });
+        }
+        let y_axis = self.normal.cross(&x_axis);
+
+        let p: Vector3 = *hit_point - self.pos;
+
+        TextureCoords {
+            u: p.dot(&x_axis) as f32,
+            v: p.dot(&y_axis) as f32,
+        }
+    }
+
+    fn get_material(&self) -> &Material {
+        &self.material
     }
 }
 
@@ -236,4 +268,45 @@ impl Light for SphericalLight {
     fn distance(&self, hit_point: &Point) -> Distance {
         (self.position - *hit_point).length()
     }
+}
+
+#[derive(Clone)]
+pub enum Coloration {
+    Color(Color),
+    Texture(ImageBuffer<image::Rgba<u8>, std::vec::Vec<u8>>),
+}
+
+fn wrap(val: f32, bound: u32) -> u32 {
+    let signed_bound = bound as i32;
+    let float_coord = val * bound as f32;
+    let wrapped_coord = (float_coord as i32) % signed_bound;
+    if wrapped_coord < 0 {
+        (wrapped_coord + signed_bound) as u32
+    } else {
+        wrapped_coord as u32
+    }
+}
+
+impl Coloration {
+    pub fn color(&self, texture_coords: &TextureCoords) -> Color {
+        match self {
+            Self::Color(c) => *c,
+            Self::Texture(tex) => {
+                let u = wrap(texture_coords.u, tex.width());
+                let v = wrap(texture_coords.v, tex.height());
+                Color::from_rgba8(&tex.get_pixel(u, v).0)
+            }
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct Material {
+    pub color: Coloration,
+    pub albedo: f32,
+}
+
+pub struct TextureCoords {
+    pub u: f32,
+    pub v: f32,
 }
