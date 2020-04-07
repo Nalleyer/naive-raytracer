@@ -271,9 +271,17 @@ impl Light for SphericalLight {
 }
 
 #[derive(Clone)]
+pub struct Texture {
+    pub image: ImageBuffer<image::Rgba<u8>, std::vec::Vec<u8>>,
+    pub offset_x: f32,
+    pub offset_y: f32,
+    pub scale: f32,
+}
+
+#[derive(Clone)]
 pub enum Coloration {
     Color(Color),
-    Texture(ImageBuffer<image::Rgba<u8>, std::vec::Vec<u8>>),
+    Texture(Texture),
 }
 
 fn wrap(val: f32, bound: u32) -> u32 {
@@ -292,9 +300,9 @@ impl Coloration {
         match self {
             Self::Color(c) => *c,
             Self::Texture(tex) => {
-                let u = wrap(texture_coords.u, tex.width());
-                let v = wrap(texture_coords.v, tex.height());
-                Color::from_rgba8(&tex.get_pixel(u, v).0)
+                let u = wrap((texture_coords.u + tex.offset_x) / tex.scale, tex.image.width());
+                let v = wrap((texture_coords.v + tex.offset_y) / tex.scale, tex.image.height());
+                Color::from_rgba8(&tex.image.get_pixel(u, v).0)
             }
         }
     }
