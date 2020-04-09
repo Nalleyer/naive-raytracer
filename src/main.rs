@@ -9,7 +9,10 @@ use color::Color;
 use math::{Point, Vector3};
 use rendering::render;
 use scene::{
-    Coloration, DirectionalLight, Material, Plane, Scene, Sphere, SphericalLight, Texture,
+    item::{Plane, Sphere},
+    light::{DirectionalLight, SphericalLight},
+    material::{Coloration, Material, Texture},
+    Scene,
 };
 
 fn main() {

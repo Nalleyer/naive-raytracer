@@ -1,6 +1,11 @@
 use crate::color::Color;
 use crate::math::{Point, Vector3};
-use crate::scene::{Distance, Material, Scene, TextureCoords, SHADOW_BIAS};
+use crate::scene::{
+    material::{Material, TextureCoords},
+    Distance, Scene,
+};
+
+pub const SHADOW_BIAS: Distance = 1e-13;
 
 use std::f64;
 
@@ -41,6 +46,13 @@ pub trait Intersectable {
     fn surface_normal(&self, hit_point: &Point) -> Vector3;
     fn texture_coords(&self, hit_point: &Point) -> TextureCoords;
     fn get_material(&self) -> &Material;
+}
+
+pub trait Light {
+    fn intensity(&self, hit_point: &Point) -> f32;
+    fn distance(&self, hit_point: &Point) -> Distance;
+    fn color(&self) -> Color;
+    fn direction_from(&self, hit_point: &Point) -> Vector3;
 }
 
 pub struct Intersection<'a> {
