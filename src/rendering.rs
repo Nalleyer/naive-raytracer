@@ -1,5 +1,6 @@
+use crate::color::Color;
 use crate::math::{Point, Vector3};
-use crate::scene::{Color, Distance, Material, Scene, TextureCoords, SHADOW_BIAS};
+use crate::scene::{Distance, Material, Scene, TextureCoords, SHADOW_BIAS};
 
 use std::f64;
 

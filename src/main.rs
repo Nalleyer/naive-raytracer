@@ -1,13 +1,15 @@
 extern crate image;
 
+mod color;
 mod math;
 mod rendering;
 mod scene;
 
+use color::Color;
 use math::{Point, Vector3};
 use rendering::render;
 use scene::{
-    Color, Coloration, DirectionalLight, Material, Plane, Scene, Sphere, SphericalLight, Texture,
+    Coloration, DirectionalLight, Material, Plane, Scene, Sphere, SphericalLight, Texture,
 };
 
 fn main() {
