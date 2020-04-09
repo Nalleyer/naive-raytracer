@@ -11,7 +11,7 @@ use rendering::render;
 use scene::{
     item::{Plane, Sphere},
     light::{DirectionalLight, SphericalLight},
-    material::{Coloration, Material, Texture},
+    material::{Coloration, Material, Texture, SurfaceType},
     Scene,
 };
 
@@ -40,6 +40,7 @@ fn test_can_render_scene() {
                         b: 0.0,
                     }),
                     albedo: 0.5,
+                    surface: SurfaceType::Diffuse,
                 },
             }),
             Box::new(Sphere {
@@ -64,6 +65,7 @@ fn test_can_render_scene() {
                     }),
                     */
                     albedo: 0.99,
+                    surface: SurfaceType::Reflective { reflectivity: 0.7 },
                 },
             }),
             Box::new(Sphere {
@@ -80,6 +82,7 @@ fn test_can_render_scene() {
                         b: 1.0,
                     }),
                     albedo: 2.0,
+                    surface: SurfaceType::Diffuse,
                 },
             }),
             Box::new(Plane {
@@ -97,6 +100,7 @@ fn test_can_render_scene() {
                         scale: 5.0,
                     }),
                     albedo: 0.5,
+                    surface: SurfaceType::Reflective { reflectivity: 0.4 },
                 },
             }),
         ],

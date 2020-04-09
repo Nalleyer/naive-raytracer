@@ -2,9 +2,16 @@ use crate::color::Color;
 use image::ImageBuffer;
 
 #[derive(Clone)]
+pub enum SurfaceType {
+    Diffuse,
+    Reflective { reflectivity: f32 },
+}
+
+#[derive(Clone)]
 pub struct Material {
     pub color: Coloration,
     pub albedo: f32,
+    pub surface: SurfaceType,
 }
 
 #[derive(Clone)]

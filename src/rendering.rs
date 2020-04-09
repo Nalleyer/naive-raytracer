@@ -1,11 +1,12 @@
 use crate::color::Color;
 use crate::math::{Point, Vector3};
 use crate::scene::{
-    material::{Material, TextureCoords},
+    material::{Material, TextureCoords, SurfaceType},
     Distance, Scene,
 };
 
 pub const SHADOW_BIAS: Distance = 1e-13;
+pub const MAX_RECURSION: usize = 50;
 
 use std::f64;
 
@@ -39,6 +40,13 @@ impl Ray {
             .normalize(),
         }
     }
+
+    pub fn crate_reflection(normal: Vector3, incident: Vector3, intersection: Point, bias: Distance) -> Self {
+    Ray {
+        origin: intersection + (normal * bias),
+        direction: incident - normal * (2.0 * incident.dot(&normal)),
+    }
+    }
 }
 
 pub trait Intersectable {
@@ -66,7 +74,7 @@ impl<'a> Intersection<'a> {
     }
 }
 
-pub fn cast_ray<'a>(scene: &'a Scene, ray: &Ray) -> Option<Intersection<'a>> {
+pub fn trace<'a>(scene: &'a Scene, ray: &Ray) -> Option<Intersection<'a>> {
     scene
         .items
         .iter()
@@ -77,42 +85,61 @@ pub fn cast_ray<'a>(scene: &'a Scene, ray: &Ray) -> Option<Intersection<'a>> {
 pub fn render(scene: &Scene) -> DynamicImage {
     let image = ImageBuffer::from_fn(scene.width, scene.height, |x, y| {
         let ray = Ray::new_prime(x, y, scene);
-        if let Some(intersection) = cast_ray(scene, &ray) {
-            let hit_point = ray.origin + (ray.direction * intersection.distance);
-            let surface_normal = intersection.item.surface_normal(&hit_point);
-            let uv = intersection.item.texture_coords(&hit_point);
-            let color: Color = scene
-                .lights
-                .iter()
-                .map(|light| {
-                    let dir = light.direction_from(&hit_point);
-                    let theta = surface_normal.dot(&dir) as f32;
-                    let shadow_ray = Ray {
-                        origin: hit_point + surface_normal * SHADOW_BIAS,
-                        direction: dir,
-                    };
-                    let shadow_intersection = cast_ray(scene, &shadow_ray);
-                    let is_in_light = shadow_intersection.is_none()
-                        || shadow_intersection.unwrap().distance > light.distance(&hit_point);
-                    light.color()
-                        * if is_in_light {
-                            light.intensity(&hit_point) * theta
-                        } else {
-                            0.0
-                        }
-                })
-                .sum::<Color>()
-                * intersection.item.get_material().albedo
-                / std::f32::consts::PI;
-
-            Rgba::from(
-                (intersection.item.get_material().color.color(&uv) * color)
-                    .clamp()
-                    .to_rgba8(),
-            )
+        if let Some(intersection) = trace(scene, &ray) {
+            Rgba::from(get_color(scene, &ray, &intersection, 0).clamp().to_rgba8())
         } else {
             Rgba::from([0, 0, 0, 0])
         }
     });
     DynamicImage::ImageRgba8(image)
+}
+
+pub fn cast_ray(scene: &Scene, ray: &Ray, depth: usize) -> Color {
+    if depth >= MAX_RECURSION {
+        return Color::black()
+    }
+
+    let intersection = trace(scene, ray);
+    intersection.map(|i| get_color(scene, &ray, &i, depth))
+        .unwrap_or(Color::black())
+}
+
+fn get_color(scene: &Scene, ray: &Ray, intersection: &Intersection, depth: usize) -> Color {
+    let hit_point = ray.origin + (ray.direction * intersection.distance);
+    let surface_normal = intersection.item.surface_normal(&hit_point);
+    let mut color = shader_diffuse(scene, intersection.item, hit_point, surface_normal);
+    if let SurfaceType::Reflective { reflectivity } = intersection.item.get_material().surface {
+        let reflection_ray = Ray::crate_reflection(surface_normal, ray.direction, hit_point, SHADOW_BIAS);
+        color = color * (1.0 - reflectivity);
+        color += cast_ray(scene, &reflection_ray, depth + 1) * reflectivity;
+    }
+    color
+}
+
+fn shader_diffuse(scene: &Scene, item: &dyn Intersectable, hit_point: Point, surface_normal: Vector3) -> Color {
+    let uv = item.texture_coords(&hit_point);
+    let color = scene
+        .lights
+        .iter()
+        .map(|light| {
+            let dir = light.direction_from(&hit_point);
+            let theta = surface_normal.dot(&dir) as f32;
+            let shadow_ray = Ray {
+                origin: hit_point + surface_normal * SHADOW_BIAS,
+                direction: dir,
+            };
+            let shadow_intersection = trace(scene, &shadow_ray);
+            let is_in_light = shadow_intersection.is_none()
+                || shadow_intersection.unwrap().distance > light.distance(&hit_point);
+            light.color()
+                * if is_in_light {
+                    light.intensity(&hit_point) * theta
+                } else {
+                    0.0
+                }
+        })
+        .sum::<Color>()
+        * item.get_material().albedo
+        / std::f32::consts::PI;
+    item.get_material().color.color(&uv) * color
 }

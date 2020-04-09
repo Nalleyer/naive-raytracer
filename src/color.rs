@@ -32,6 +32,12 @@ impl Color {
             g: self.g.min(1.0).max(0.0),
         }
     }
+
+    pub fn black() -> Self {
+        Color {
+            r: 0.0, g: 0.0, b: 0.0,
+        }
+    }
 }
 
 impl Add for Color {
