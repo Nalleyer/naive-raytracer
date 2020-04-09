@@ -6,7 +6,9 @@ mod scene;
 
 use math::{Point, Vector3};
 use rendering::render;
-use scene::{Coloration, Color, DirectionalLight, Material, Texture, Plane, Scene, Sphere, SphericalLight};
+use scene::{
+    Color, Coloration, DirectionalLight, Material, Plane, Scene, Sphere, SphericalLight, Texture,
+};
 
 fn main() {
     test_can_render_scene();
@@ -27,7 +29,7 @@ fn test_can_render_scene() {
                 },
                 radius: 1.0,
                 material: Material {
-                    color: Coloration::Color(Color{
+                    color: Coloration::Color(Color {
                         r: 0.0,
                         g: 1.0,
                         b: 0.0,
@@ -67,7 +69,7 @@ fn test_can_render_scene() {
                 },
                 radius: 5.0,
                 material: Material {
-                    color: Coloration::Color(Color{
+                    color: Coloration::Color(Color {
                         r: 0.0,
                         g: 0.0,
                         b: 1.0,
@@ -83,7 +85,7 @@ fn test_can_render_scene() {
                 },
                 normal: Vector3::new(0.0, -1.0, 0.0).normalize(),
                 material: Material {
-                    color: Coloration::Texture(Texture{
+                    color: Coloration::Texture(Texture {
                         image: tex.to_rgba(),
                         offset_x: 0.0,
                         offset_y: 0.0,

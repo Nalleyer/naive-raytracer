@@ -1,5 +1,5 @@
 use crate::math::{Point, Vector3};
-use crate::scene::{Color, Scene, SHADOW_BIAS, TextureCoords, Distance, Material};
+use crate::scene::{Color, Distance, Material, Scene, TextureCoords, SHADOW_BIAS};
 
 use std::f64;
 
@@ -44,11 +44,11 @@ pub trait Intersectable {
 
 pub struct Intersection<'a> {
     pub distance: f64,
-    pub item: &'a Box<dyn Intersectable>,
+    pub item: &'a dyn Intersectable,
 }
 
 impl<'a> Intersection<'a> {
-    pub fn new<'b>(distance: f64, item: &'b Box<dyn Intersectable>) -> Intersection<'b> {
+    pub fn new(distance: f64, item: &dyn Intersectable) -> Intersection {
         Intersection { distance, item }
     }
 }
@@ -57,7 +57,7 @@ pub fn cast_ray<'a>(scene: &'a Scene, ray: &Ray) -> Option<Intersection<'a>> {
     scene
         .items
         .iter()
-        .filter_map(|i| i.intersect(ray).map(|d| Intersection::new(d, i)))
+        .filter_map(|i| i.intersect(ray).map(|d| Intersection::new(d, i.as_ref())))
         .min_by(|i1, i2| i1.distance.partial_cmp(&i2.distance).unwrap())
 }
 
@@ -79,7 +79,8 @@ pub fn render(scene: &Scene) -> DynamicImage {
                         direction: dir,
                     };
                     let shadow_intersection = cast_ray(scene, &shadow_ray);
-                    let is_in_light = shadow_intersection.is_none() || shadow_intersection.unwrap().distance > light.distance(&hit_point);
+                    let is_in_light = shadow_intersection.is_none()
+                        || shadow_intersection.unwrap().distance > light.distance(&hit_point);
                     light.color()
                         * if is_in_light {
                             light.intensity(&hit_point) * theta
@@ -91,7 +92,11 @@ pub fn render(scene: &Scene) -> DynamicImage {
                 * intersection.item.get_material().albedo
                 / std::f32::consts::PI;
 
-            Rgba::from((intersection.item.get_material().color.color(&uv) * color).clamp().to_rgba8())
+            Rgba::from(
+                (intersection.item.get_material().color.color(&uv) * color)
+                    .clamp()
+                    .to_rgba8(),
+            )
         } else {
             Rgba::from([0, 0, 0, 0])
         }

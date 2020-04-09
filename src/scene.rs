@@ -25,7 +25,7 @@ impl Color {
         ]
     }
 
-    pub fn from_rgba8(rgba8: &[u8; 4]) -> Self {
+    pub fn from_rgba8(rgba8: [u8; 4]) -> Self {
         Color {
             r: rgba8[0] as f32 / 255f32,
             g: rgba8[1] as f32 / 255f32,
@@ -300,9 +300,15 @@ impl Coloration {
         match self {
             Self::Color(c) => *c,
             Self::Texture(tex) => {
-                let u = wrap((texture_coords.u + tex.offset_x) / tex.scale, tex.image.width());
-                let v = wrap((texture_coords.v + tex.offset_y) / tex.scale, tex.image.height());
-                Color::from_rgba8(&tex.image.get_pixel(u, v).0)
+                let u = wrap(
+                    (texture_coords.u + tex.offset_x) / tex.scale,
+                    tex.image.width(),
+                );
+                let v = wrap(
+                    (texture_coords.v + tex.offset_y) / tex.scale,
+                    tex.image.height(),
+                );
+                Color::from_rgba8(tex.image.get_pixel(u, v).0)
             }
         }
     }
