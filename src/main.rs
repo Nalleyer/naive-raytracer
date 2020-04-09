@@ -11,7 +11,7 @@ use rendering::render;
 use scene::{
     item::{Plane, Sphere},
     light::{DirectionalLight, SphericalLight},
-    material::{Coloration, Material, Texture, SurfaceType},
+    material::{Coloration, Material, SurfaceType, Texture},
     Scene,
 };
 

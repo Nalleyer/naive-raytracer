@@ -1,7 +1,7 @@
 use crate::color::Color;
 use crate::math::{Point, Vector3};
 use crate::scene::{
-    material::{Material, TextureCoords, SurfaceType},
+    material::{Material, SurfaceType, TextureCoords},
     Distance, Scene,
 };
 
@@ -41,11 +41,16 @@ impl Ray {
         }
     }
 
-    pub fn crate_reflection(normal: Vector3, incident: Vector3, intersection: Point, bias: Distance) -> Self {
-    Ray {
-        origin: intersection + (normal * bias),
-        direction: incident - normal * (2.0 * incident.dot(&normal)),
-    }
+    pub fn crate_reflection(
+        normal: Vector3,
+        incident: Vector3,
+        intersection: Point,
+        bias: Distance,
+    ) -> Self {
+        Ray {
+            origin: intersection + (normal * bias),
+            direction: incident - normal * (2.0 * incident.dot(&normal)),
+        }
     }
 }
 
@@ -96,11 +101,12 @@ pub fn render(scene: &Scene) -> DynamicImage {
 
 pub fn cast_ray(scene: &Scene, ray: &Ray, depth: usize) -> Color {
     if depth >= MAX_RECURSION {
-        return Color::black()
+        return Color::black();
     }
 
     let intersection = trace(scene, ray);
-    intersection.map(|i| get_color(scene, &ray, &i, depth))
+    intersection
+        .map(|i| get_color(scene, &ray, &i, depth))
         .unwrap_or(Color::black())
 }
 
@@ -109,14 +115,20 @@ fn get_color(scene: &Scene, ray: &Ray, intersection: &Intersection, depth: usize
     let surface_normal = intersection.item.surface_normal(&hit_point);
     let mut color = shader_diffuse(scene, intersection.item, hit_point, surface_normal);
     if let SurfaceType::Reflective { reflectivity } = intersection.item.get_material().surface {
-        let reflection_ray = Ray::crate_reflection(surface_normal, ray.direction, hit_point, SHADOW_BIAS);
+        let reflection_ray =
+            Ray::crate_reflection(surface_normal, ray.direction, hit_point, SHADOW_BIAS);
         color = color * (1.0 - reflectivity);
         color += cast_ray(scene, &reflection_ray, depth + 1) * reflectivity;
     }
     color
 }
 
-fn shader_diffuse(scene: &Scene, item: &dyn Intersectable, hit_point: Point, surface_normal: Vector3) -> Color {
+fn shader_diffuse(
+    scene: &Scene,
+    item: &dyn Intersectable,
+    hit_point: Point,
+    surface_normal: Vector3,
+) -> Color {
     let uv = item.texture_coords(&hit_point);
     let color = scene
         .lights
