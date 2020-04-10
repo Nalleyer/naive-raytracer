@@ -107,7 +107,7 @@ pub fn cast_ray(scene: &Scene, ray: &Ray, depth: usize) -> Color {
     let intersection = trace(scene, ray);
     intersection
         .map(|i| get_color(scene, &ray, &i, depth))
-        .unwrap_or(Color::black())
+        .unwrap_or_else(Color::black)
 }
 
 fn get_color(scene: &Scene, ray: &Ray, intersection: &Intersection, depth: usize) -> Color {
@@ -133,25 +133,32 @@ fn shader_diffuse(
     let color = scene
         .lights
         .iter()
-        .map(|light| {
-            let dir = light.direction_from(&hit_point);
-            let theta = surface_normal.dot(&dir) as f32;
-            let shadow_ray = Ray {
-                origin: hit_point + surface_normal * SHADOW_BIAS,
-                direction: dir,
-            };
-            let shadow_intersection = trace(scene, &shadow_ray);
-            let is_in_light = shadow_intersection.is_none()
-                || shadow_intersection.unwrap().distance > light.distance(&hit_point);
-            light.color()
-                * if is_in_light {
-                    light.intensity(&hit_point) * theta
-                } else {
-                    0.0
-                }
-        })
+        .map(|light| color_from_light(scene, light.as_ref(), hit_point, surface_normal))
         .sum::<Color>()
         * item.get_material().albedo
         / std::f32::consts::PI;
     item.get_material().color.color(&uv) * color
+}
+
+fn color_from_light(
+    scene: &Scene,
+    light: &dyn Light,
+    hit_point: Point,
+    surface_normal: Vector3,
+) -> Color {
+    let dir = light.direction_from(&hit_point);
+    let theta = surface_normal.dot(&dir) as f32;
+    let shadow_ray = Ray {
+        origin: hit_point + surface_normal * SHADOW_BIAS,
+        direction: dir,
+    };
+    let shadow_intersection = trace(scene, &shadow_ray);
+    let is_in_light = shadow_intersection.is_none()
+        || shadow_intersection.unwrap().distance > light.distance(&hit_point);
+    light.color()
+        * if is_in_light {
+            light.intensity(&hit_point) * theta
+        } else {
+            0.0
+        }
 }
