@@ -124,8 +124,8 @@ pub fn par_render_pixels(scene: &Scene) -> Vec<Color> {
     (0..w * h)
         .into_par_iter()
         .map(|i| {
-            let x = i / w;
-            let y = i % h;
+            let x = i % w;
+            let y = i / w;
             render_a_pixel(scene, x, y)
         })
         .collect()
@@ -142,9 +142,9 @@ fn render_a_pixel(scene: &Scene, x: u32, y: u32) -> Color {
 
 pub fn render(scene: &Scene) -> DynamicImage {
     let pixels = par_render_pixels(scene);
-    let h = scene.height;
+    let w = scene.width;
     let image = ImageBuffer::from_fn(scene.width, scene.height, |x, y| {
-        Rgba::from(pixels[(y * h + x) as usize].to_rgba8())
+        Rgba::from(pixels[(x + y * w) as usize].to_rgba8())
         // Rgba::from(render_a_pixel(scene, x, y).to_rgba8())
     });
     DynamicImage::ImageRgba8(image)
