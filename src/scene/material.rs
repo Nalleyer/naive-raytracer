@@ -5,6 +5,7 @@ use image::ImageBuffer;
 pub enum SurfaceType {
     Diffuse,
     Reflective { reflectivity: f32 },
+    Refractive { index: f32, transparency: f32 },
 }
 
 #[derive(Clone)]

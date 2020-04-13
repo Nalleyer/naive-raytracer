@@ -29,23 +29,26 @@ fn test_can_render_scene() {
             Box::new(Sphere {
                 center: Point {
                     x: 0.0,
-                    y: 2.0,
+                    y: 0.0,
                     z: -3.0,
                 },
-                radius: 1.0,
+                radius: 1.2,
                 material: Material {
                     color: Coloration::Color(Color {
-                        r: 0.0,
+                        r: 1.0,
                         g: 1.0,
-                        b: 0.0,
+                        b: 1.0,
                     }),
-                    albedo: 0.5,
-                    surface: SurfaceType::Diffuse,
+                    albedo: 0.18,
+                    surface: SurfaceType::Refractive {
+                        index: 1.5,
+                        transparency: 0.9,
+                    },
                 },
             }),
             Box::new(Sphere {
                 center: Point {
-                    x: 2.0,
+                    x: 4.0,
                     y: 2.0,
                     z: -7.5,
                 },
@@ -103,10 +106,28 @@ fn test_can_render_scene() {
                     surface: SurfaceType::Reflective { reflectivity: 0.4 },
                 },
             }),
+            Box::new(Plane {
+                pos: Point {
+                    x: 0.0,
+                    y: 0.0,
+                    z: -15.0,
+                },
+                normal: Vector3::new(0.0, 0.0, -1.0).normalize(),
+                material: Material {
+                    color: Coloration::Texture(Texture {
+                        image: tex.to_rgba(),
+                        offset_x: 0.0,
+                        offset_y: 0.0,
+                        scale: 5.0,
+                    }),
+                    albedo: 0.5,
+                    surface: SurfaceType::Reflective { reflectivity: 0.4 },
+                },
+            }),
         ],
         lights: vec![
             Box::new(DirectionalLight {
-                direction: Vector3::new(-0.5, -1.0, 0.1).normalize(),
+                direction: Vector3::new(-0.5, -1.0, -1.0).normalize(),
                 color: Color {
                     r: 1.0,
                     g: 1.0,

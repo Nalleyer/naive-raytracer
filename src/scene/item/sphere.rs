@@ -25,10 +25,14 @@ impl Intersectable for Sphere {
             None
         } else {
             let iq_len = (r2 - d2).sqrt();
-            let t0 = iq_len + os_on_ray;
-            let t1 = -iq_len + os_on_ray;
-            if t0 < 0f64 || t1 < 0f64 {
+            let t0 = -iq_len + os_on_ray;
+            let t1 = iq_len + os_on_ray;
+            if t0 < 0f64 && t1 < 0f64 {
                 None
+            } else if t0 < 0.0 {
+                Some(t1)
+            } else if t1 < 0.0 {
+                Some(t0)
             } else {
                 Some(t0.min(t1))
             }
