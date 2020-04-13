@@ -9,8 +9,6 @@ fn gamma_decode(encoded: f32) -> f32 {
     encoded.powf(GAMMA)
 }
 
-
-
 #[derive(Debug, PartialEq, Default, Clone, Copy)]
 pub struct Color {
     pub r: f32,

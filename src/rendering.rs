@@ -5,6 +5,8 @@ use crate::scene::{
     Distance, Scene,
 };
 
+use rayon::prelude::*;
+
 pub const SHADOW_BIAS: Distance = 1e-12;
 pub const MAX_RECURSION: usize = 25;
 
@@ -116,14 +118,34 @@ pub fn trace<'a>(scene: &'a Scene, ray: &Ray) -> Option<Intersection<'a>> {
         .min_by(|i1, i2| i1.distance.partial_cmp(&i2.distance).unwrap())
 }
 
+pub fn par_render_pixels(scene: &Scene) -> Vec<Color> {
+    let w = scene.width;
+    let h = scene.height;
+    (0..w * h)
+        .into_par_iter()
+        .map(|i| {
+            let x = i / w;
+            let y = i % h;
+            render_a_pixel(scene, x, y)
+        })
+        .collect()
+}
+
+fn render_a_pixel(scene: &Scene, x: u32, y: u32) -> Color {
+    let ray = Ray::new_prime(x, y, scene);
+    if let Some(intersection) = trace(scene, &ray) {
+        get_color(scene, &ray, &intersection, 0).clamp()
+    } else {
+        Color::black()
+    }
+}
+
 pub fn render(scene: &Scene) -> DynamicImage {
+    let pixels = par_render_pixels(scene);
+    let h = scene.height;
     let image = ImageBuffer::from_fn(scene.width, scene.height, |x, y| {
-        let ray = Ray::new_prime(x, y, scene);
-        if let Some(intersection) = trace(scene, &ray) {
-            Rgba::from(get_color(scene, &ray, &intersection, 0).clamp().to_rgba8())
-        } else {
-            Rgba::from([0, 0, 0, 0])
-        }
+        Rgba::from(pixels[(y * h + x) as usize].to_rgba8())
+        // Rgba::from(render_a_pixel(scene, x, y).to_rgba8())
     });
     DynamicImage::ImageRgba8(image)
 }
@@ -239,13 +261,12 @@ fn fresnel(incident: Vector3, normal: Vector3, index: f32) -> f64 {
 
     let sin_t = eta_i / eta_t * (1.0 - i_dot_n * i_dot_n).max(0.0).sqrt();
     if sin_t > 1.0 {
-        //Total internal reflection
-        return 1.0;
+        1.0
     } else {
         let cos_t = (1.0 - sin_t * sin_t).max(0.0).sqrt();
         let cos_i = cos_t.abs();
         let r_s = ((eta_t * cos_i) - (eta_i * cos_t)) / ((eta_t * cos_i) + (eta_i * cos_t));
         let r_p = ((eta_i * cos_i) - (eta_t * cos_t)) / ((eta_i * cos_i) + (eta_t * cos_t));
-        return (r_s * r_s + r_p * r_p) / 2.0;
+        (r_s * r_s + r_p * r_p) / 2.0
     }
 }
