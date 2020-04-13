@@ -22,14 +22,14 @@ fn main() {
 fn test_can_render_scene() {
     let tex = image::open("tex.png").unwrap();
     let scene = Scene {
-        width: 800,
-        height: 600,
+        width: 1920,
+        height: 1080,
         fov: 90.0,
         items: vec![
             Box::new(Sphere {
                 center: Point {
                     x: 0.0,
-                    y: 0.0,
+                    y: 0.5,
                     z: -3.0,
                 },
                 radius: 1.2,
@@ -67,8 +67,8 @@ fn test_can_render_scene() {
                         b: 0.0,
                     }),
                     */
-                    albedo: 0.99,
-                    surface: SurfaceType::Reflective { reflectivity: 0.7 },
+                    albedo: 0.5,
+                    surface: SurfaceType::Reflective { reflectivity: 0.4 },
                 },
             }),
             Box::new(Sphere {
@@ -91,7 +91,7 @@ fn test_can_render_scene() {
             Box::new(Plane {
                 pos: Point {
                     x: 0.0,
-                    y: -2.0,
+                    y: -7.0,
                     z: -5.0,
                 },
                 normal: Vector3::new(0.0, -1.0, 0.0).normalize(),

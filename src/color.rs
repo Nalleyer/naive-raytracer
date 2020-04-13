@@ -1,4 +1,15 @@
 use std::ops::{Add, AddAssign, Div, Mul};
+pub const GAMMA: f32 = 2.2;
+
+fn gamma_encode(linear: f32) -> f32 {
+    linear.powf(1.0 / GAMMA)
+}
+
+fn gamma_decode(encoded: f32) -> f32 {
+    encoded.powf(GAMMA)
+}
+
+
 
 #[derive(Debug, PartialEq, Default, Clone, Copy)]
 pub struct Color {
@@ -10,18 +21,18 @@ pub struct Color {
 impl Color {
     pub fn to_rgba8(self) -> [u8; 4] {
         [
-            (self.r * 255f32) as u8,
-            (self.g * 255f32) as u8,
-            (self.b * 255f32) as u8,
+            (gamma_encode(self.r) * 255f32) as u8,
+            (gamma_encode(self.g) * 255f32) as u8,
+            (gamma_encode(self.b) * 255f32) as u8,
             255u8,
         ]
     }
 
     pub fn from_rgba8(rgba8: [u8; 4]) -> Self {
         Color {
-            r: rgba8[0] as f32 / 255f32,
-            g: rgba8[1] as f32 / 255f32,
-            b: rgba8[2] as f32 / 255f32,
+            r: gamma_decode(rgba8[0] as f32 / 255f32),
+            g: gamma_decode(rgba8[1] as f32 / 255f32),
+            b: gamma_decode(rgba8[2] as f32 / 255f32),
         }
     }
 

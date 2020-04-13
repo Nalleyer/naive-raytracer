@@ -6,7 +6,7 @@ use crate::scene::{
 };
 
 pub const SHADOW_BIAS: Distance = 1e-12;
-pub const MAX_RECURSION: usize = 10;
+pub const MAX_RECURSION: usize = 25;
 
 use std::f64;
 
