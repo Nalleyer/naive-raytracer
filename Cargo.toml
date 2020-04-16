@@ -9,3 +9,4 @@ edition = "2018"
 [dependencies]
 image = "0.23.2"
 rayon = "1.3"
+rand = "0.7.*"

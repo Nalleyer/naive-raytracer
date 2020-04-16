@@ -5,11 +5,10 @@ use crate::scene::{
     Distance,
 };
 
-#[derive(Clone)]
 pub struct Plane {
     pub pos: Point,
     pub normal: Vector3,
-    pub material: Material,
+    pub material: Box<dyn Material + Send + Sync>,
 }
 
 impl Intersectable for Plane {
@@ -54,6 +53,6 @@ impl Intersectable for Plane {
     }
 
     fn get_material(&self) -> &Material {
-        &self.material
+        self.material.as_ref()
     }
 }

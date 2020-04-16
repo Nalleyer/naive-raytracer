@@ -10,8 +10,7 @@ use math::{Point, Vector3};
 use rendering::render;
 use scene::{
     item::{Plane, Sphere},
-    light::{DirectionalLight, SphericalLight},
-    material::{Coloration, Material, SurfaceType, Texture},
+    material::{Coloration, Material, SurfaceType, Texture, UniversalMaterial},
     Scene,
 };
 
@@ -22,8 +21,8 @@ fn main() {
 fn test_can_render_scene() {
     let tex = image::open("tex.png").unwrap();
     let scene = Scene {
-        width: 1920,
-        height: 1080,
+        width: 640,
+        height: 480,
         fov: 90.0,
         items: vec![
             Box::new(Sphere {
@@ -33,18 +32,19 @@ fn test_can_render_scene() {
                     z: -3.0,
                 },
                 radius: 1.2,
-                material: Material {
+                material: Box::new(UniversalMaterial {
                     color: Coloration::Color(Color {
                         r: 1.0,
                         g: 1.0,
                         b: 1.0,
                     }),
-                    albedo: 0.18,
-                    surface: SurfaceType::Refractive {
-                        index: 1.5,
-                        transparency: 0.9,
-                    },
-                },
+                    albedo: 3.0,
+                    index: 1.5,
+                    transparency: 0.9,
+                    reflectivity: 0.0,
+                    emmit: 0.0,
+                    is_light: false,
+                })
             }),
             Box::new(Sphere {
                 center: Point {
@@ -53,7 +53,7 @@ fn test_can_render_scene() {
                     z: -7.5,
                 },
                 radius: 3.5,
-                material: Material {
+                material: Box::new(UniversalMaterial {
                     color: Coloration::Texture(Texture {
                         image: tex.to_rgba(),
                         offset_x: 0.0,
@@ -67,9 +67,13 @@ fn test_can_render_scene() {
                         b: 0.0,
                     }),
                     */
-                    albedo: 0.5,
-                    surface: SurfaceType::Reflective { reflectivity: 0.4 },
-                },
+                    albedo: 2.0,
+                    index: 0.0,
+                    transparency: 0.0,
+                    reflectivity: 0.7,
+                    emmit: 0.5,
+                    is_light: false,
+                }),
             }),
             Box::new(Sphere {
                 center: Point {
@@ -78,16 +82,65 @@ fn test_can_render_scene() {
                     z: -7.5,
                 },
                 radius: 5.0,
-                material: Material {
+                material: Box::new(UniversalMaterial {
                     color: Coloration::Color(Color {
                         r: 0.0,
                         g: 0.0,
                         b: 1.0,
                     }),
                     albedo: 2.0,
-                    surface: SurfaceType::Diffuse,
-                },
+                    index: 0.0,
+                    transparency: 0.0,
+                    reflectivity: 0.0,
+                    emmit: 0.0,
+                    is_light: false,
+                }),
             }),
+            // light 1
+            Box::new(Sphere {
+                center: Point {
+                    x: 0.0,
+                    y: 3.0,
+                    z: -1.5,
+                },
+                radius: 1.0,
+                material: Box::new(UniversalMaterial {
+                    color: Coloration::Color(Color {
+                        r: 1.0,
+                        g: 1.0,
+                        b: 0.0,
+                    }),
+                    albedo: 0.0,
+                    index: 0.0,
+                    transparency: 0.0,
+                    reflectivity: 0.0,
+                    emmit: 300.0,
+                    is_light: true,
+                }),
+            }),
+            // ground
+            Box::new(Sphere {
+                center: Point {
+                    x: 0.0,
+                    y: -1000.0,
+                    z: -7.5,
+                },
+                radius: 995.0,
+                material: Box::new(UniversalMaterial {
+                    color: Coloration::Color(Color {
+                        r: 1.0,
+                        g: 1.0,
+                        b: 1.0,
+                    }),
+                    albedo: 3.0,
+                    index: 0.0,
+                    transparency: 0.0,
+                    reflectivity: 0.0,
+                    emmit: 0.0,
+                    is_light: false,
+                }),
+            }),
+            /*
             Box::new(Plane {
                 pos: Point {
                     x: 0.0,
@@ -95,7 +148,7 @@ fn test_can_render_scene() {
                     z: -5.0,
                 },
                 normal: Vector3::new(0.0, -1.0, 0.0).normalize(),
-                material: Material {
+                material: Box::new(UniversalMaterial {
                     color: Coloration::Texture(Texture {
                         image: tex.to_rgba(),
                         offset_x: 0.0,
@@ -103,8 +156,11 @@ fn test_can_render_scene() {
                         scale: 5.0,
                     }),
                     albedo: 0.5,
-                    surface: SurfaceType::Reflective { reflectivity: 0.4 },
-                },
+                    index: 0.0,
+                    transparency: 0.0,
+                    reflectivity: 0.4,
+                    emmit: 0.0,
+                }),
             }),
             Box::new(Plane {
                 pos: Point {
@@ -113,7 +169,7 @@ fn test_can_render_scene() {
                     z: -15.0,
                 },
                 normal: Vector3::new(0.0, 0.0, -1.0).normalize(),
-                material: Material {
+                material: Box::new(UniversalMaterial {
                     color: Coloration::Texture(Texture {
                         image: tex.to_rgba(),
                         offset_x: 0.0,
@@ -121,29 +177,13 @@ fn test_can_render_scene() {
                         scale: 5.0,
                     }),
                     albedo: 0.5,
-                    surface: SurfaceType::Reflective { reflectivity: 0.4 },
-                },
+                    index: 0.0,
+                    transparency: 0.0,
+                    reflectivity: 0.4,
+                    emmit: 0.5,
+                }),
             }),
-        ],
-        lights: vec![
-            Box::new(DirectionalLight {
-                direction: Vector3::new(-0.5, -1.0, -1.0).normalize(),
-                color: Color {
-                    r: 1.0,
-                    g: 1.0,
-                    b: 1.0,
-                },
-                intensity: 2.0,
-            }),
-            Box::new(SphericalLight {
-                position: Point::new(3.0, 2.0, -3.0),
-                color: Color {
-                    r: 1.0,
-                    g: 1.0,
-                    b: 1.0,
-                },
-                intensity: 255.0,
-            }),
+            */
         ],
     };
 

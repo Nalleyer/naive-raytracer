@@ -5,11 +5,10 @@ use crate::scene::{
     Distance,
 };
 
-#[derive(Clone)]
 pub struct Sphere {
     pub center: Point,
     pub radius: Distance,
-    pub material: Material,
+    pub material: Box<dyn Material + Send + Sync>,
 }
 
 impl Intersectable for Sphere {
@@ -54,6 +53,6 @@ impl Intersectable for Sphere {
     }
 
     fn get_material(&self) -> &Material {
-        &self.material
+        self.material.as_ref()
     }
 }

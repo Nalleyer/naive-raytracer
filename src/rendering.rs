@@ -9,11 +9,13 @@ use rayon::prelude::*;
 
 pub const SHADOW_BIAS: Distance = 1e-12;
 pub const MAX_RECURSION: usize = 25;
+pub const NUM_SAMPLE: usize = 32;
 
 use std::f64;
 
 use image::{DynamicImage, ImageBuffer, Rgba};
 
+#[derive(Debug)]
 pub struct Ray {
     pub origin: Point,
     pub direction: Vector3,
@@ -89,7 +91,7 @@ pub trait Intersectable {
     fn intersect(&self, ray: &Ray) -> Option<Distance>;
     fn surface_normal(&self, hit_point: &Point) -> Vector3;
     fn texture_coords(&self, hit_point: &Point) -> TextureCoords;
-    fn get_material(&self) -> &Material;
+    fn get_material(&self) -> &dyn Material;
 }
 
 pub trait Light {
@@ -126,7 +128,10 @@ pub fn par_render_pixels(scene: &Scene) -> Vec<Color> {
         .map(|i| {
             let x = i % w;
             let y = i / w;
-            render_a_pixel(scene, x, y)
+            (0..NUM_SAMPLE)
+                .into_par_iter()
+                .map(|_| render_a_pixel(scene, x, y))
+                .sum::<Color>() / NUM_SAMPLE as f32
         })
         .collect()
 }
@@ -136,7 +141,7 @@ fn render_a_pixel(scene: &Scene, x: u32, y: u32) -> Color {
     if let Some(intersection) = trace(scene, &ray) {
         get_color(scene, &ray, &intersection, 0).clamp()
     } else {
-        Color::black()
+        Color::sky(&ray.direction)
     }
 }
 
@@ -164,52 +169,23 @@ pub fn cast_ray(scene: &Scene, ray: &Ray, depth: usize) -> Color {
 fn get_color(scene: &Scene, ray: &Ray, intersection: &Intersection, depth: usize) -> Color {
     let hit_point = ray.origin + (ray.direction * intersection.distance);
     let surface_normal = intersection.item.surface_normal(&hit_point);
-    match intersection.item.get_material().surface {
-        SurfaceType::Diffuse => shader_diffuse(scene, intersection.item, hit_point, surface_normal),
-        SurfaceType::Reflective { reflectivity } => {
-            let mut color = shader_diffuse(scene, intersection.item, hit_point, surface_normal);
-            let reflection_ray =
-                Ray::create_reflection(surface_normal, ray.direction, hit_point, SHADOW_BIAS);
-            color = color * (1.0 - reflectivity);
-            color += cast_ray(scene, &reflection_ray, depth + 1) * reflectivity;
-            color
-        }
-        SurfaceType::Refractive {
-            index,
-            transparency,
-        } => {
-            let mut refraction_color = Color::black();
-            let uv = intersection.item.texture_coords(&hit_point);
-            let surface_color = intersection.item.get_material().color.color(&uv);
-            let kr = fresnel(ray.direction, surface_normal, index) as f32;
-
-            if kr < 1.0 {
-                let transmission_ray = Ray::create_transmission(
-                    surface_normal,
-                    ray.direction,
-                    hit_point,
-                    SHADOW_BIAS,
-                    index,
-                )
-                .expect("gettting trans ray");
-                refraction_color = cast_ray(scene, &transmission_ray, depth + 1);
-            }
-            // println!(
-            //     "hit:{:?}, in:{:?}, n:{:?} -> {:?}",
-            //     hit_point, ray.direction, surface_normal, transmission_ray.direction
-            // );
-
-            let reflection_ray =
-                Ray::create_reflection(surface_normal, ray.direction, hit_point, SHADOW_BIAS);
-            let reflection_color = cast_ray(scene, &reflection_ray, depth + 1);
-            let mut color = reflection_color * kr + refraction_color * (1.0 - kr);
-            // println!("d: {} refc:{:?}, surfacec:{:?}", depth, color, surface_color);
-            color = color * transparency * surface_color;
-            color
-        }
+    let emmited = intersection.item.get_material().emmit(ray, &hit_point);
+    if depth < MAX_RECURSION {
+        let scatter = intersection
+            .item
+            .get_material()
+            .scatter(ray, &surface_normal, &hit_point, &intersection.item.texture_coords(&hit_point));
+        scatter.ray.as_ref().map_or(emmited, |bounce| {
+            trace(scene, &bounce).map_or(Color::sky(&bounce.direction), |new_intersection| {
+                emmited + scatter.color * get_color(scene, &bounce, &new_intersection, depth + 1)
+            })
+        })
+    } else {
+        Color::black()
     }
 }
 
+/*
 fn shader_diffuse(
     scene: &Scene,
     item: &dyn Intersectable,
@@ -226,6 +202,7 @@ fn shader_diffuse(
         / std::f32::consts::PI;
     item.get_material().color.color(&uv) * color
 }
+*/
 
 fn color_from_light(
     scene: &Scene,

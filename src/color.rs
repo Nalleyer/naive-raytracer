@@ -1,4 +1,5 @@
 use std::ops::{Add, AddAssign, Div, Mul};
+use crate::math::{Vector3};
 pub const GAMMA: f32 = 2.2;
 
 fn gamma_encode(linear: f32) -> f32 {
@@ -47,6 +48,15 @@ impl Color {
             r: 0.0,
             g: 0.0,
             b: 0.0,
+        }
+    }
+
+    pub fn sky(v: &Vector3) -> Self {
+        let nv = v.normalize();
+        Color {
+            r: 0.0,
+            g: ((nv.y * 0.5 + 0.5) as f32) / 10.0,
+            b: ((nv.y * 0.5 + 0.5) as f32) / 10.0,
         }
     }
 }
