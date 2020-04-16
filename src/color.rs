@@ -52,12 +52,8 @@ impl Color {
     }
 
     pub fn sky(v: &Vector3) -> Self {
-        let nv = v.normalize();
-        Color {
-            r: 0.0,
-            g: ((nv.y * 0.5 + 0.5) as f32) / 10.0,
-            b: ((nv.y * 0.5 + 0.5) as f32) / 10.0,
-        }
+        let t = 0.5 * (v.y + 1.0) as f32;
+        Color { r: 1.0, g: 1.0, b: 1.0 } * (1.0 - t) + Color { r : 0.3, g: 0.5, b: 1.0 } * t
     }
 }
 

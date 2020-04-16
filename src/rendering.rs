@@ -138,11 +138,7 @@ pub fn par_render_pixels(scene: &Scene) -> Vec<Color> {
 
 fn render_a_pixel(scene: &Scene, x: u32, y: u32) -> Color {
     let ray = Ray::new_prime(x, y, scene);
-    if let Some(intersection) = trace(scene, &ray) {
-        get_color(scene, &ray, &intersection, 0).clamp()
-    } else {
-        Color::sky(&ray.direction)
-    }
+    cast_ray(scene, &ray, 0).clamp()
 }
 
 pub fn render(scene: &Scene) -> DynamicImage {
@@ -163,7 +159,7 @@ pub fn cast_ray(scene: &Scene, ray: &Ray, depth: usize) -> Color {
     let intersection = trace(scene, ray);
     intersection
         .map(|i| get_color(scene, &ray, &i, depth))
-        .unwrap_or_else(Color::black)
+        .unwrap_or(Color::sky(&ray.direction))
 }
 
 fn get_color(scene: &Scene, ray: &Ray, intersection: &Intersection, depth: usize) -> Color {
@@ -176,9 +172,7 @@ fn get_color(scene: &Scene, ray: &Ray, intersection: &Intersection, depth: usize
             .get_material()
             .scatter(ray, &surface_normal, &hit_point, &intersection.item.texture_coords(&hit_point));
         scatter.ray.as_ref().map_or(emmited, |bounce| {
-            trace(scene, &bounce).map_or(Color::sky(&bounce.direction), |new_intersection| {
-                emmited + scatter.color * get_color(scene, &bounce, &new_intersection, depth + 1)
-            })
+            emmited + scatter.color * cast_ray(scene, bounce, depth + 1)
         })
     } else {
         Color::black()

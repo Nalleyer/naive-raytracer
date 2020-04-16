@@ -28,17 +28,17 @@ fn test_can_render_scene() {
             Box::new(Sphere {
                 center: Point {
                     x: 0.0,
-                    y: 0.5,
+                    y: -1.0,
                     z: -3.0,
                 },
                 radius: 1.2,
                 material: Box::new(UniversalMaterial {
                     color: Coloration::Color(Color {
-                        r: 1.0,
-                        g: 1.0,
-                        b: 1.0,
+                        r: 0.7,
+                        g: 0.7,
+                        b: 0.7,
                     }),
-                    albedo: 3.0,
+                    albedo: 1.0,
                     index: 1.5,
                     transparency: 0.9,
                     reflectivity: 0.0,
@@ -49,7 +49,7 @@ fn test_can_render_scene() {
             Box::new(Sphere {
                 center: Point {
                     x: 4.0,
-                    y: 2.0,
+                    y: 0.0,
                     z: -7.5,
                 },
                 radius: 3.5,
@@ -67,11 +67,11 @@ fn test_can_render_scene() {
                         b: 0.0,
                     }),
                     */
-                    albedo: 2.0,
+                    albedo: 1.0,
                     index: 0.0,
                     transparency: 0.0,
                     reflectivity: 0.7,
-                    emmit: 0.5,
+                    emmit: 0.0,
                     is_light: false,
                 }),
             }),
@@ -88,15 +88,16 @@ fn test_can_render_scene() {
                         g: 0.0,
                         b: 1.0,
                     }),
-                    albedo: 2.0,
+                    albedo: 1.0,
                     index: 0.0,
                     transparency: 0.0,
                     reflectivity: 0.0,
-                    emmit: 0.0,
+                    emmit: 1.0,
                     is_light: false,
                 }),
             }),
             // light 1
+            /*
             Box::new(Sphere {
                 center: Point {
                     x: 0.0,
@@ -114,10 +115,11 @@ fn test_can_render_scene() {
                     index: 0.0,
                     transparency: 0.0,
                     reflectivity: 0.0,
-                    emmit: 300.0,
+                    emmit: 0.0,
                     is_light: true,
                 }),
             }),
+            */
             // ground
             Box::new(Sphere {
                 center: Point {
@@ -132,7 +134,7 @@ fn test_can_render_scene() {
                         g: 1.0,
                         b: 1.0,
                     }),
-                    albedo: 3.0,
+                    albedo: 0.8,
                     index: 0.0,
                     transparency: 0.0,
                     reflectivity: 0.0,

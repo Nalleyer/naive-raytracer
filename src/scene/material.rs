@@ -54,13 +54,13 @@ impl Material for UniversalMaterial {
         uv: &TextureCoords,
     ) -> Scatter {
         let target = *hit_point + *normal + random_in_unit_sphere();
-        let new_v = (target - *hit_point).normalize();
+        let new_v = target - *hit_point;
         Scatter {
             ray: if self.is_light {
                 None
             } else {
                 Some(Ray {
-                    origin: *hit_point + new_v * SHADOW_BIAS,
+                    origin: *hit_point + new_v.normalize() * SHADOW_BIAS,
                     direction: new_v,
                 })
             },
